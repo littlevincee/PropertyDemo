@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Index";
+    var transactionVMs = ViewBag.Transactions as List<PropertyDemo.Service.ViewModel.PropertyTransactionViewModel>;
+}
+
+<h1>Property Transaction List</h1>
+
+<table class="table">
+    <tr>
+        <th>Property Name</th>
+        <th></th>
+    </tr>
+    @foreach (var property in transactionVMs)
+    {
+        <tr>
+            <td>
+                @property.PropertyName
+            </td>
+            <td>
+                @if (property.IsOwnProperty)
+                {
+                    <a asp-action="Create" asp-route-id="@property.PropertyId">Add new Transaction</a>
+                }
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div style="display:inline-block">
+                    <table>
+                        <tr>
+                            <th>
+                                Transaction Date
+                            </th>
+                            <th></th>
+                        </tr>
+                        @foreach (var transactionVM in property.TransactionViewModels)
+                        { 
+                            <tr>
+                                <td>
+                                    @transactionVM.TransactionDate
+                                </td>
+                                @if (property.IsOwnProperty)
+                                {
+                                    <td>
+                                        <a asp-action="Edit" asp-route-id="@transactionVM.TransactionId">Edit</a> |
+                                        <a asp-action="Delete" asp-route-id="@transactionVM.TransactionId">Delete</a>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </table>
+                </div>
+            </td>
+        </tr>
+    }
+</table>

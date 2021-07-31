@@ -1,0 +1,54 @@
+﻿@model PropertyDemo.Data.Model.Property
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Property - Add New Record</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="PropertyName" class="control-label"></label>
+                <input asp-for="PropertyName" class="form-control" />
+                <span asp-validation-for="PropertyName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Bedroom" class="control-label"></label>
+                <input asp-for="Bedroom" class="form-control" min="1" />
+                <span asp-validation-for="Bedroom" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsAvaliable" /> @Html.DisplayNameFor(model => model.IsAvaliable)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="SalePrice" class="control-label"></label>
+                <input asp-for="SalePrice" class="form-control" min="0.00" />
+                <span asp-validation-for="SalePrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LeasePrice" class="control-label"></label>
+                <input asp-for="LeasePrice" class="form-control" min="0.00" />
+                <span asp-validation-for="LeasePrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <a asp-action="Index">
+                    <input type="button" value="Go Back" class="btn btn-info" />
+                </a>
+                <input type="reset" value="Reset" class="btn btn-dark" />
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,68 @@
+﻿@model PropertyDemo.Data.Model.Transaction
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Transaction - Add New Record</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <div class="input-group date">
+                    <label asp-for="TransactionDate" class="control-label"></label>
+                    <input id="transactionDate" asp-for="TransactionDate" class="form-control datepicker"
+                           data-target="#transactionDate"
+                           readonly="readonly" style="background-color: white" />
+                    <span asp-validation-for="TransactionDate" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="TransactionAmount" class="control-label"></label>
+                <input asp-for="TransactionAmount" class="form-control" min="1" />
+                <span asp-validation-for="TransactionAmount" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsDeposit" /> @Html.DisplayNameFor(model => model.IsDeposit)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="PaymentMethod" class="control-label"></label>
+                <input asp-for="PaymentMethod" class="form-control" />
+                <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="BankName" class="control-label"></label>
+                <input asp-for="BankName" class="form-control" />
+                <span asp-validation-for="BankName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <a asp-action="Index">
+                    <input type="button" value="Go Back" class="btn btn-info" />
+                </a>
+                <input type="reset" value="Reset" class="btn btn-dark" />
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(function () {
+            $('#transactionDate').datepicker({
+                changeMonth: true,
+                changeYear: true,
+                language: "en"
+            });
+        });
+
+    </script>
+}

@@ -1,0 +1,18 @@
+version: "3.5"
+services:
+  ms-sql:
+    image: mcr.microsoft.com/mssql/server:2019-CU11-ubuntu-20.04
+    container_name: ms-sql
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_PID: Developer
+      SA_PASSWORD: 66tWJLDI42UG
+    ports:
+      - 1433:1433
+  mvc:
+    image: property-demo:latest
+    container_name: mvc
+    ports:
+      - 80:80
+    depends_on:
+      - ms-sql

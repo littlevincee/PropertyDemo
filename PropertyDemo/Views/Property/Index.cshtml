@@ -1,0 +1,50 @@
+﻿@model PropertyDemo.Service.ViewModel.PropertyViewModel
+
+@{
+    ViewData["Title"] = "Index";
+    var propertiesVM = ViewBag.Properties as List<PropertyDemo.Service.ViewModel.PropertyViewModel>;
+}
+
+<h1>Property List</h1>
+
+<div>
+    <a asp-action="Create">Create New Property</a>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.PropertyName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Bedroom)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SalePrice)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LeasePrice)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsAvaliable)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in propertiesVM)
+        {
+            <tr>
+                <td>@item.PropertyName</td>
+                <td>@item.Bedroom</td>
+                <td>@item.SalePrice</td>
+                <td>@item.LeasePrice</td>
+                <td>@item.IsAvaliable</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.PropertyId">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@item.PropertyId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
