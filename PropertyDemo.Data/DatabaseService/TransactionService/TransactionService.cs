@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PropertyDemo.Data.DatabaseService.PropertyService;
+using PropertyDemo.Data.Model;
 using PropertyDemo.Service.Exceptions;
 using PropertyDemo.Service.ViewModel;
 
@@ -17,7 +18,7 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
 
         Task<TransactionViewModel> GetTransactionByTransactionIdAsync(int TransactionId);
 
-        Task<int> SaveChangesAsync(Model.Transaction Transaction);
+        Task<int> SaveChangesAsync(TransactionViewModel transactionViewModel, int propertyId, ApplicationUser applicationUser);
 
         Task<int> UpdateAsync(TransactionViewModel TransactionVM);
 
@@ -27,32 +28,43 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
     public class TransactionService : ITransactionService
     {
         private readonly IDataContext _dataContext;
-        private IPropertyService _propertyService;
 
-        public TransactionService(IDataContext dataContext, IPropertyService propertyService)
-        {
-            _dataContext = dataContext;
-            _propertyService = propertyService;
-        }
+        public TransactionService(IDataContext dataContext) =>  _dataContext = dataContext;
 
         #region Save, Update, Delete
 
-        public async Task<int> SaveChangesAsync(Model.Transaction transaction)
+        public async Task<int> SaveChangesAsync(TransactionViewModel transactionViewModel, int propertyId, ApplicationUser applicationUser)
         {
-            transaction.CreatedOn = DateTime.UtcNow;
+            var result = 0;
+            
+            if (string.IsNullOrWhiteSpace(applicationUser.Id))
+            {
+                return result;
+            }
+            
+            transactionViewModel.PropertyId = propertyId;
+
+            transactionViewModel.UserId = applicationUser.Id;
+
+            var transaction = TransactionModelMapper(transactionViewModel);
 
             _dataContext.Transactions.Add(transaction);
 
-            var saveResult = await _dataContext.SaveChangesAsync(default);
+            result = await _dataContext.SaveChangesAsync(default);
 
-            return saveResult;
+            return result;
         }
 
         public async Task<int> UpdateAsync(TransactionViewModel transactionVM)
         {
-            var transaction = TransactionModelMapper(transactionVM);
+            var result = 0;
 
-            var saveResult = 0;
+            if (transactionVM is null)
+            {
+                return result;
+            }
+
+            var transaction = TransactionModelMapper(transactionVM);
 
             try
             {
@@ -60,7 +72,7 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
 
                 _dataContext.Transactions.Update(transaction);
 
-                saveResult = await _dataContext.SaveChangesAsync(default);
+                result = await _dataContext.SaveChangesAsync(default);
             }
             catch (DbUpdateConcurrencyException ex)
             {
@@ -70,7 +82,7 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
                 }
             }
 
-            return saveResult;
+            return result;
         }
 
         /// <summary>
@@ -78,13 +90,27 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
         /// </summary>
         /// <param name="TransactionId"></param>
         /// <returns></returns>
-        public async Task<int> DeleteAsync(int TransactionId)
+        public async Task<int> DeleteAsync(int transactionId)
         {
-            var Transaction = await _dataContext.Transactions.FindAsync(TransactionId);
+            var result = 0;
 
-            _dataContext.Transactions.Remove(Transaction);
+            if (transactionId < 1)
+            {
+                return result;
+            }
 
-            return await _dataContext.SaveChangesAsync(default);
+            var transaction = await _dataContext.Transactions.FindAsync(transactionId);
+
+            if (transaction is null)
+            {
+                return result;
+            }
+            
+            _dataContext.Transactions.Remove(transaction);
+
+            result = await _dataContext.SaveChangesAsync(default);
+
+            return result;
         }
         #endregion
 
@@ -102,7 +128,7 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
                                 .Include(x => x.ApplicationUser)
                                 .Where(w => w.ApplicationUserId == userId && w.ApplicationUser.IsAdministrator == false);
 
-            return PropertyTransactionMapper(transactions);
+            return PropertyTransactionMapper(transactions, userId);
         }
 
         /// <summary>
@@ -124,8 +150,9 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
 
             var propertyTransactionVM = new List<PropertyTransactionViewModel>();
 
-            var adminPropertyTransactionVM = PropertyTransactionMapper(adminProperties);
-            var nonAdminPropertyTransactionVM = PropertyTransactionMapper(nonAdminProperties);
+            var adminPropertyTransactionVM = PropertyTransactionMapper(adminProperties, userId);
+
+            var nonAdminPropertyTransactionVM = PropertyTransactionMapper(nonAdminProperties, userId);
 
             return adminPropertyTransactionVM.Concat(nonAdminPropertyTransactionVM).ToList();
         }
@@ -153,7 +180,7 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
         /// </summary>
         /// <param name="properties">IQueryabelk of Model.Properties</param>
         /// <returns>A list of Property Transaction View Model</returns>
-        private List<PropertyTransactionViewModel> PropertyTransactionMapper(IQueryable<Model.Property> properties)
+        private List<PropertyTransactionViewModel> PropertyTransactionMapper(IQueryable<Property> properties, string userId = default)
         {
             var propertyTransactionVM = new List<PropertyTransactionViewModel>();
 
@@ -161,9 +188,10 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
             {
                 var property = new PropertyTransactionViewModel()
                 {
-                    IsOwnProperty = prop.ApplicationUser.IsAdministrator,
+                    IsOwnProperty = prop.ApplicationUserId == userId ? true : false,
                     PropertyName = prop.PropertyName,
                     PropertyId = prop.PropertyId,
+                    OwnerDetailId = prop.OwnerDetailId
                 };
 
                 if (prop.Transactions.Count > 0)
@@ -191,16 +219,18 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
         /// </summary>
         /// <param name="transaction">A Transaction model</param>
         /// <returns>A Transaction View Model</returns>
-        private TransactionViewModel TransactionViewModelMapper(Model.Transaction transaction)
+        private TransactionViewModel TransactionViewModelMapper(Transaction transaction)
             => new TransactionViewModel()
             {
                 TransactionId = transaction.TransactionId,
                 PropertyId = transaction.PropertyId,
                 TransactionDate = transaction.TransactionDate,
+                TransactionType = transaction.TransactionType,
                 BankName = transaction.BankName,
                 IsDeposit = transaction.IsDeposit,
                 PaymentMethod = transaction.PaymentMethod,
                 TransactionAmount = transaction.TransactionAmount,
+                OwnerDetailId = transaction.OwnerDetailId,
                 UserId  = transaction.ApplicationUserId
             };
 
@@ -215,11 +245,14 @@ namespace PropertyDemo.Data.DatabaseService.TransactionService
                 PropertyId = transactionViewModel.PropertyId,
                 TransactionId = transactionViewModel.TransactionId,
                 TransactionAmount = transactionViewModel.TransactionAmount,
+                TransactionType = transactionViewModel.TransactionType,
                 TransactionDate = transactionViewModel.TransactionDate,
                 BankName = transactionViewModel.BankName,
                 IsDeposit = transactionViewModel.IsDeposit,
                 PaymentMethod = transactionViewModel.PaymentMethod,
-                ApplicationUserId = transactionViewModel.UserId
+                OwnerDetailId = transactionViewModel.OwnerDetailId,
+                ApplicationUserId = transactionViewModel.UserId,
+                CreatedOn = DateTime.Now
             };
 
         #endregion

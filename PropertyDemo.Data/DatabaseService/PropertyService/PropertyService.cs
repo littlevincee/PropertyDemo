@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using PropertyDemo.Data.Model;
 using PropertyDemo.Service.Exceptions;
 using PropertyDemo.Service.ViewModel;
 
@@ -16,7 +17,7 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
 
         Task<PropertyViewModel> GetPropertyByPropertyIdAsync(int propertyId);
 
-        Task<int> SaveChangesAsync(Model.Property property);
+        Task<int> SaveChangesAsync(PropertyViewModel propertyViewlModel, ApplicationUser user);
 
         Task<int> UpdateAsync(PropertyViewModel propertyVM);
 
@@ -27,29 +28,42 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
     {
         private readonly IDataContext _dataContext;
 
-        public PropertyService(IDataContext dataContext)
-        {
-            _dataContext = dataContext;
-        }
+        public PropertyService(IDataContext dataContext) => _dataContext = dataContext;
 
         #region Save Property
 
-        public async Task<int> SaveChangesAsync(Model.Property property)
+        public async Task<int> SaveChangesAsync(PropertyViewModel propertyViewlModel, ApplicationUser user)
         {
-            property.CreatedOn = DateTime.UtcNow;
+            var result = 0;
+
+            if (string.IsNullOrWhiteSpace(user.Id))
+            {
+                return result;
+            }
+
+            propertyViewlModel.UserId = user.Id;
+
+            var property = PropertyModelMapper(propertyViewlModel);
 
             _dataContext.Properties.Add(property);
 
-            var saveResult = await _dataContext.SaveChangesAsync(default);
+            result = await _dataContext.SaveChangesAsync(default);
 
-            return saveResult;
+
+            return result;
         }
 
         public async Task<int> UpdateAsync(PropertyViewModel propertyVM)
         {
+            var result = 0;
+
+            if (propertyVM is null)
+            {
+                return result;
+            }
+
             var property = PropertyModelMapper(propertyVM);
 
-            var saveResult = 0;
 
             try
             {
@@ -57,7 +71,7 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
 
                 _dataContext.Properties.Update(property);
 
-                saveResult = await _dataContext.SaveChangesAsync(default);
+                result = await _dataContext.SaveChangesAsync(default);
             }
             catch (DbUpdateConcurrencyException ex)
             {
@@ -67,14 +81,30 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
                 }
             }
 
-            return saveResult;
+            return result;
         }
 
         public async Task<int> DeleteAsync(int propertyId)
         {
+            var result = 0;
+
+            if (propertyId < 1)
+            {
+                return result;
+            }
+
             var property = await _dataContext.Properties.FindAsync(propertyId);
+
+            if (property is null)
+            {
+                return result;
+            }
+            
             _dataContext.Properties.Remove(property);
-            return await _dataContext.SaveChangesAsync(default);
+            
+            result = await _dataContext.SaveChangesAsync(default);
+
+            return result;
         }
         #endregion
 
@@ -88,6 +118,7 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
         public List<PropertyViewModel> GetAllNonAdminPropertiesByUserId(string userId)
         {
             var properties = _dataContext.Properties
+                                .Include(s => s.OwnerDetail)
                                 .Where(x => x.ApplicationUserId == userId && x.ApplicationUser.IsAdministrator == false);
 
             return PropertyViewModelMapper(properties);
@@ -100,13 +131,13 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
         /// <returns>A list of property view model</returns>
         public List<PropertyViewModel> GetAllPropertiesByCheckingAdminRight(string userId)
         {
-            var adminPropertiesQuery = from prop in _dataContext.Properties
+            var adminPropertiesQuery = from prop in _dataContext.Properties.Include(s => s.OwnerDetail)
                        join user in _dataContext.ApplicationUsers
                        on prop.ApplicationUserId equals user.Id
                        where prop.ApplicationUserId == userId && user.IsAdministrator == true
                        select prop;
 
-            var nonAdminPropertiesQuery = from prop in _dataContext.Properties
+            var nonAdminPropertiesQuery = from prop in _dataContext.Properties.Include(s => s.OwnerDetail)
                       join user in _dataContext.ApplicationUsers
                        on prop.ApplicationUserId equals user.Id
                       where user.IsAdministrator == false && prop.ApplicationUserId != userId
@@ -126,7 +157,11 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
         /// <returns>A Property View Model</returns>
         public async Task<PropertyViewModel> GetPropertyByPropertyIdAsync(int propertyId)
         {
-            var property = await _dataContext.Properties.FindAsync(propertyId);
+            var property = await _dataContext
+                                .Properties
+                                .Include(s => s.OwnerDetail)
+                                .Where(s => s.PropertyId == propertyId)
+                                .FirstAsync(default);
 
             _ = property ?? throw new CustomException("Property not found");
 
@@ -142,7 +177,7 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
         /// </summary>
         /// <param name="properties">IQueryable of Model.Property</param>
         /// <returns>A list of property view model</returns>
-        private List<PropertyViewModel> PropertyViewModelMapper(IQueryable<Model.Property> properties)
+        private List<PropertyViewModel> PropertyViewModelMapper(IQueryable<Property> properties)
         {
             var propertiesVM = new List<PropertyViewModel>();
 
@@ -157,6 +192,8 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
                         LeasePrice = item.LeasePrice,
                         SalePrice = item.SalePrice,
                         IsAvaliable = item.IsAvaliable,
+                        OwnerDetailId = item.OwnerDetailId,
+                        OwnerName = item.OwnerDetail.Title + " " + item.OwnerDetail.FirstName + " " + item.OwnerDetail.Surname
                     });
             }
 
@@ -168,7 +205,7 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
         /// </summary>
         /// <param name="properties">IQueryable of Model.Property</param>
         /// <returns>A property view model</returns>
-        private PropertyViewModel PropertyViewModelMapper(Model.Property property)
+        private PropertyViewModel PropertyViewModelMapper(Property property)
             => new PropertyViewModel()
             {
                 PropertyId = property.PropertyId,
@@ -177,7 +214,9 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
                 LeasePrice = property.LeasePrice,
                 SalePrice = property.SalePrice,
                 IsAvaliable = property.IsAvaliable,
-                UserId = property.ApplicationUserId
+                OwnerDetailId = property.OwnerDetailId,
+                OwnerName = property.OwnerDetail.Title + " " + property.OwnerDetail.FirstName + " " + property.OwnerDetail.Surname,
+                UserId = property.ApplicationUserId,
             };
 
         /// <summary>
@@ -186,8 +225,8 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
         /// <param name="propertyViewModel">A Property View Model</param>
         /// <returns>A Property</returns>
 
-        private Model.Property PropertyModelMapper(PropertyViewModel propertyViewModel)
-            => new Model.Property()
+        private Property PropertyModelMapper(PropertyViewModel propertyViewModel)
+            => new Property()
             {
                 PropertyId = propertyViewModel.PropertyId,
                 PropertyName = propertyViewModel.PropertyName,
@@ -195,7 +234,9 @@ namespace PropertyDemo.Data.DatabaseService.PropertyService
                 LeasePrice = propertyViewModel.LeasePrice,
                 SalePrice = propertyViewModel.SalePrice,
                 IsAvaliable = propertyViewModel.IsAvaliable,
-                ApplicationUserId = propertyViewModel.UserId
+                OwnerDetailId = propertyViewModel.OwnerDetailId,
+                ApplicationUserId = propertyViewModel.UserId,
+                CreatedOn = propertyViewModel.CreatedOn
             };
 
         #endregion

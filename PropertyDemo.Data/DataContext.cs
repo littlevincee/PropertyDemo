@@ -12,6 +12,8 @@ namespace PropertyDemo.Data
         
         DbSet<Model.Transaction> Transactions { get; }
 
+        DbSet<Model.OwnerDetail> OwnerDetails { get; }
+
         DbSet<Model.ApplicationUser> ApplicationUsers { get; }
         
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
@@ -21,19 +23,17 @@ namespace PropertyDemo.Data
 
     public class DataContext : IdentityDbContext<Model.ApplicationUser>, IDataContext
     {
-
         public DbSet<Model.Property> Properties { get; set; }
         
         public DbSet<Model.Transaction> Transactions { get; set; }
 
+        public DbSet<Model.OwnerDetail> OwnerDetails { get; set; }
+
         public DbSet<Model.ApplicationUser> ApplicationUsers { get; set; }
 
-
-        public DataContext(DbContextOptions<DataContext> options, IAppConfiguration appConfiguration)
+        public DataContext(DbContextOptions<DataContext> options)
             : base(options)
-        {
-            appConfiguration = appConfiguration;
-        }
+        { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

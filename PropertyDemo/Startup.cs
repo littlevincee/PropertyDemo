@@ -18,6 +18,7 @@ using PropertyDemo.Service;
 using PropertyDemo.Configuration;
 using PropertyDemo.Data.DatabaseService.PropertyService;
 using PropertyDemo.Data.DatabaseService.TransactionService;
+using PropertyDemo.Data.DatabaseService.OwnerDetailService;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
@@ -48,6 +49,7 @@ namespace PropertyDemo
             services.AddScoped<IDataContext, DataContext>();
             services.AddScoped<IPropertyService, PropertyService>();
             services.AddScoped<ITransactionService, TransactionService>();
+            services.AddScoped<IOwnerDetailService, OwnerDetailService>();
 
             services.AddIdentity<ApplicationUser, IdentityRole>(opt =>
             {

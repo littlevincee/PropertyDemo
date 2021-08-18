@@ -19,7 +19,7 @@
             <td>
                 @if (property.IsOwnProperty)
                 {
-                    <a asp-action="Create" asp-route-id="@property.PropertyId">Add new Transaction</a>
+                    <a asp-action="Create" asp-route-id="@property.PropertyId" asp-route-ownerId="@property.OwnerDetailId" asp-route-propertyName="@property.PropertyName">Add new Transaction</a>
                 }
             </td>
         </tr>

@@ -1,7 +1,8 @@
-﻿@model PropertyDemo.Data.Model.Property
+﻿@model PropertyDemo.Service.ViewModel.PropertyViewModel
 
 @{
     ViewData["Title"] = "Create";
+
 }
 
 <h1>Property - Add New Record</h1>
@@ -35,6 +36,13 @@
                 <label asp-for="LeasePrice" class="control-label"></label>
                 <input asp-for="LeasePrice" class="form-control" min="0.00" />
                 <span asp-validation-for="LeasePrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Select a property owner</label>
+                <select class="form-control" asp-for="OwnerDetailId" asp-items="@ViewBag.SelectListItems">
+                    <option value="">---Select a owner---</option>
+                </select>
+                <span asp-validation-for="OwnerDetailId" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <a asp-action="Index">

@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace PropertyDemo.Data.Configuration
@@ -14,13 +13,13 @@ namespace PropertyDemo.Data.Configuration
                     .ValueGeneratedOnAdd();
 
             // Table & Column Mappings
-            builder.ToTable("Transaction");            
+            builder.ToTable("Transaction");
 
             builder.Property(x => x.TransactionDate)
                     .IsRequired();
 
             builder.Property(x => x.TransactionAmount)
-                    .HasPrecision(15,2)
+                    .HasPrecision(15, 2)
                     .IsRequired();
 
             builder.Property(x => x.PaymentMethod)
@@ -33,6 +32,11 @@ namespace PropertyDemo.Data.Configuration
                     .HasMaxLength(50)
                     .IsRequired();
 
+            builder.Property(x => x.TransactionType)
+                    .HasColumnType("varchar")
+                    .HasMaxLength(10)
+                    .IsRequired();
+
             builder.Property(x => x.IsDeposit)
                     .IsRequired();
 
@@ -43,13 +47,21 @@ namespace PropertyDemo.Data.Configuration
             builder.HasOne(t => t.Property)
                     .WithMany(t => t.Transactions)
                     .HasForeignKey(t => t.PropertyId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasOne(t => t.OwnerDetail)
+                    .WithMany(t => t.Transactions)
+                    .HasForeignKey(t => t.OwnerDetailId)
+                    .OnDelete(DeleteBehavior.NoAction);
 
             builder.HasOne(t => t.ApplicationUser)
                 .WithMany(t => t.Transactions)
                 .HasForeignKey(t => t.ApplicationUserId)
                 .OnDelete(DeleteBehavior.NoAction)
                 .IsRequired();
+
+
+
         }
     }
 }

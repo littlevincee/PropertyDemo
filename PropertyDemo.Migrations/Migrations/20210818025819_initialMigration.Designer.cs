@@ -10,7 +10,7 @@ using PropertyDemo.Data;
 namespace PropertyDemo.Migrations.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20210731124930_initialMigration")]
+    [Migration("20210818025819_initialMigration")]
     partial class initialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -220,6 +220,51 @@ namespace PropertyDemo.Migrations.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
+            modelBuilder.Entity("PropertyDemo.Data.Model.OwnerDetail", b =>
+                {
+                    b.Property<int>("OwnerDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("ContactNumber")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("HongKongId")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("varchar(8)");
+
+                    b.Property<string>("Surname")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("OwnerDetailId");
+
+                    b.HasIndex("HongKongId")
+                        .IsUnique();
+
+                    b.HasIndex("FirstName", "Surname", "HongKongId")
+                        .IsUnique();
+
+                    b.ToTable("OwnerDetail");
+                });
+
             modelBuilder.Entity("PropertyDemo.Data.Model.Property", b =>
                 {
                     b.Property<int>("PropertyId")
@@ -244,6 +289,9 @@ namespace PropertyDemo.Migrations.Migrations
                         .HasPrecision(15, 2)
                         .HasColumnType("decimal(15,2)");
 
+                    b.Property<int>("OwnerDetailId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PropertyName")
                         .IsRequired()
                         .HasMaxLength(25)
@@ -259,6 +307,8 @@ namespace PropertyDemo.Migrations.Migrations
                     b.HasKey("PropertyId");
 
                     b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("OwnerDetailId");
 
                     b.ToTable("Property");
                 });
@@ -285,6 +335,9 @@ namespace PropertyDemo.Migrations.Migrations
                     b.Property<bool>("IsDeposit")
                         .HasColumnType("bit");
 
+                    b.Property<int>("OwnerDetailId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -300,12 +353,19 @@ namespace PropertyDemo.Migrations.Migrations
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
                     b.Property<DateTime>("UpdatedOn")
                         .HasColumnType("datetime2");
 
                     b.HasKey("TransactionId");
 
                     b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("OwnerDetailId");
 
                     b.HasIndex("PropertyId");
 
@@ -371,7 +431,15 @@ namespace PropertyDemo.Migrations.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("PropertyDemo.Data.Model.OwnerDetail", "OwnerDetail")
+                        .WithMany("Properties")
+                        .HasForeignKey("OwnerDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("ApplicationUser");
+
+                    b.Navigation("OwnerDetail");
                 });
 
             modelBuilder.Entity("PropertyDemo.Data.Model.Transaction", b =>
@@ -382,18 +450,33 @@ namespace PropertyDemo.Migrations.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("PropertyDemo.Data.Model.OwnerDetail", "OwnerDetail")
+                        .WithMany("Transactions")
+                        .HasForeignKey("OwnerDetailId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("PropertyDemo.Data.Model.Property", "Property")
                         .WithMany("Transactions")
                         .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("ApplicationUser");
+
+                    b.Navigation("OwnerDetail");
 
                     b.Navigation("Property");
                 });
 
             modelBuilder.Entity("PropertyDemo.Data.Model.ApplicationUser", b =>
+                {
+                    b.Navigation("Properties");
+
+                    b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("PropertyDemo.Data.Model.OwnerDetail", b =>
                 {
                     b.Navigation("Properties");
 

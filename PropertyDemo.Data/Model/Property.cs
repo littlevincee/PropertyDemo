@@ -24,6 +24,9 @@ namespace PropertyDemo.Data.Model
         // Relationships
         public virtual ICollection<Transaction> Transactions { get; set; }
 
+        public int OwnerDetailId { get; set; }
+        public virtual OwnerDetail OwnerDetail { get; set; }
+
         public string ApplicationUserId { get; set; }
         public virtual ApplicationUser ApplicationUser { get; set; }
     }

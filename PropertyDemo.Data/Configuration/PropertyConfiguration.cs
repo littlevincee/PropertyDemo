@@ -24,7 +24,6 @@ namespace PropertyDemo.Data.Configuration
                     .IsRequired();
 
             builder.Property(x => x.IsAvaliable)
-                    .IsRequired()
                     .IsRequired();
 
             builder.Property(x => x.SalePrice)
@@ -43,6 +42,12 @@ namespace PropertyDemo.Data.Configuration
                     .WithMany(t => t.Properties)
                     .HasForeignKey(t => t.ApplicationUserId)
                     .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired();
+
+            builder.HasOne(t => t.OwnerDetail)
+                    .WithMany(t => t.Properties)
+                    .HasForeignKey(t => t.OwnerDetailId)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .IsRequired();
         }
     }

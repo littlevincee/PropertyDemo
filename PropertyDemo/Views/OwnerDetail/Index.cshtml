@@ -1,0 +1,45 @@
+﻿@model PropertyDemo.Service.ViewModel.OwnerDetailViewModel
+
+@{
+    ViewData["Title"] = "Index";
+    var OwnerDetailsVM = ViewBag.OwnerDetails as List<PropertyDemo.Service.ViewModel.OwnerDetailViewModel>;
+}
+
+<h1>Owner Detail</h1>
+
+<p>
+    <a asp-action="Create">Create New Propperty Owner Detail</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FirstName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Surname)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ContactNumber)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in OwnerDetailsVM)
+        {
+        <tr>
+            <td>@item.Title</td>
+            <td>@item.FirstName</td>
+            <td>@item.Surname</td>
+            <td>@item.ContactNumber</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.OwnerDetailId">Edit</a>
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>

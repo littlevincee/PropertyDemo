@@ -28,23 +28,27 @@
             <th>
                 @Html.DisplayNameFor(model => model.IsAvaliable)
             </th>
+            <th>
+                Owned By
+            </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in propertiesVM)
         {
-            <tr>
-                <td>@item.PropertyName</td>
-                <td>@item.Bedroom</td>
-                <td>@item.SalePrice</td>
-                <td>@item.LeasePrice</td>
-                <td>@item.IsAvaliable</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.PropertyId">Edit</a> |
-                    <a asp-action="Delete" asp-route-id="@item.PropertyId">Delete</a>
-                </td>
-            </tr>
+        <tr>
+            <td>@item.PropertyName</td>
+            <td>@item.Bedroom</td>
+            <td>@item.SalePrice</td>
+            <td>@item.LeasePrice</td>
+            <td>@item.IsAvaliable</td>
+            <td>@item.OwnerName</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.PropertyId">Edit</a> |
+                <a asp-action="Delete" asp-route-id="@item.PropertyId">Delete</a>
+            </td>
+        </tr>
         }
     </tbody>
 </table>

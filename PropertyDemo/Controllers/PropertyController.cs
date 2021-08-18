@@ -5,6 +5,9 @@ using PropertyDemo.Data.Model;
 using Microsoft.AspNetCore.Identity;
 using PropertyDemo.Service.ViewModel;
 using PropertyDemo.Data.DatabaseService.PropertyService;
+using PropertyDemo.Data.DatabaseService.OwnerDetailService;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace PropertyDemo.Controllers
 {
@@ -12,46 +15,57 @@ namespace PropertyDemo.Controllers
     public class PropertyController : Controller
     {
         private readonly IPropertyService _propertyService;
+        
+        private readonly IOwnerDetailService _ownerDetailService;
+        
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public PropertyController(IPropertyService propertyService, UserManager<ApplicationUser> userManager)
-        {
-            _propertyService = propertyService;
-            _userManager = userManager;
-        }
+        public PropertyController(IPropertyService propertyService, IOwnerDetailService ownerDetailService, UserManager<ApplicationUser> userManager)
+            => (_propertyService, _ownerDetailService, _userManager) = (propertyService, ownerDetailService, userManager);
+       
 
         // GET: PropertyController
         public async Task<IActionResult> Index()
         {
-            var _user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User);
 
-            var properties = _propertyService.GetAllNonAdminPropertiesByUserId(_user.Id);
-
-            if (_user.IsAdministrator)
+            if (user.IsAdministrator)
             {
-                properties = _propertyService.GetAllPropertiesByCheckingAdminRight(_user.Id);
+                ViewBag.Properties = _propertyService.GetAllPropertiesByCheckingAdminRight(user.Id);
             }
+            else
+            {
+                ViewBag.Properties = _propertyService.GetAllNonAdminPropertiesByUserId(user.Id);
+            };
 
-            ViewBag.Properties = properties;
             return View();
         }
 
         // Get: PropertyController/Create
-        public ActionResult Create()
-        {
+        public IActionResult Create()
+        {            
+            List<SelectListItem> selectListItems = new List<SelectListItem>();
+
+            foreach (var item in _ownerDetailService.GetAllOwnerDetails())
+            {
+                selectListItems.Add(new SelectListItem { Text = item.Title + " " + item.FirstName + " " + item.Surname, Value = item.OwnerDetailId.ToString() });
+            }
+
+            ViewBag.SelectListItems = selectListItems;
+
             return View();
         }
 
         // POST: PropertyController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Property property)
+        public async Task<IActionResult> Create(PropertyViewModel propertyViewModel)
         {
             if (ModelState.IsValid)
             {
-                var _user = await _userManager.GetUserAsync(User);
-                property.ApplicationUserId = _user.Id;
-                var saveResult = await _propertyService.SaveChangesAsync(property);
+                var user = await _userManager.GetUserAsync(User);
+                
+                var saveResult = await _propertyService.SaveChangesAsync(propertyViewModel, user);
 
                 if (saveResult > 0)
                 {
@@ -59,7 +73,7 @@ namespace PropertyDemo.Controllers
                 }
             }
 
-            return View(property);
+            return View(propertyViewModel);
         }
 
         // GET: PropertyController/Edit/5
@@ -71,6 +85,14 @@ namespace PropertyDemo.Controllers
 
                 if (property is not null)
                 {
+                    List<SelectListItem> selectListItems = new List<SelectListItem>();
+                    foreach (var item in _ownerDetailService.GetAllOwnerDetails())
+                    {
+                        selectListItems.Add(new SelectListItem { Text = item.FirstName + " " + item.Surname, Value = item.OwnerDetailId.ToString() });
+                    }
+
+                    ViewBag.SelectListItems = selectListItems;
+
                     return View(property);
                 }
             }
@@ -112,6 +134,7 @@ namespace PropertyDemo.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await _propertyService.DeleteAsync(id);
+
             return RedirectToAction(nameof(Index));
         }
     }

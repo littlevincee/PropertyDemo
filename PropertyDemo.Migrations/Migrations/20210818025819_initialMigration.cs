@@ -48,6 +48,25 @@ namespace PropertyDemo.Migrations.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "OwnerDetail",
+                columns: table => new
+                {
+                    OwnerDetailId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Surname = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ContactNumber = table.Column<int>(type: "int", nullable: false),
+                    HongKongId = table.Column<string>(type: "varchar(8)", maxLength: 8, nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OwnerDetail", x => x.OwnerDetailId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -166,6 +185,7 @@ namespace PropertyDemo.Migrations.Migrations
                     LeasePrice = table.Column<decimal>(type: "decimal(15,2)", precision: 15, scale: 2, nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    OwnerDetailId = table.Column<int>(type: "int", nullable: false),
                     ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
@@ -176,6 +196,12 @@ namespace PropertyDemo.Migrations.Migrations
                         column: x => x.ApplicationUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Property_OwnerDetail_OwnerDetailId",
+                        column: x => x.OwnerDetailId,
+                        principalTable: "OwnerDetail",
+                        principalColumn: "OwnerDetailId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -184,15 +210,17 @@ namespace PropertyDemo.Migrations.Migrations
                 {
                     TransactionId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PropertyId = table.Column<int>(type: "int", nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     TransactionAmount = table.Column<decimal>(type: "decimal(15,2)", precision: 15, scale: 2, nullable: false),
                     PaymentMethod = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false),
                     BankName = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false),
                     IsDeposit = table.Column<bool>(type: "bit", nullable: false),
+                    TransactionType = table.Column<string>(type: "varchar(10)", maxLength: 10, nullable: false),
                     TransactionDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedOn = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    UpdatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PropertyId = table.Column<int>(type: "int", nullable: false),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    OwnerDetailId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -203,11 +231,15 @@ namespace PropertyDemo.Migrations.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                     table.ForeignKey(
+                        name: "FK_Transaction_OwnerDetail_OwnerDetailId",
+                        column: x => x.OwnerDetailId,
+                        principalTable: "OwnerDetail",
+                        principalColumn: "OwnerDetailId");
+                    table.ForeignKey(
                         name: "FK_Transaction_Property_PropertyId",
                         column: x => x.PropertyId,
                         principalTable: "Property",
-                        principalColumn: "PropertyId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PropertyId");
                 });
 
             migrationBuilder.CreateIndex(
@@ -250,14 +282,36 @@ namespace PropertyDemo.Migrations.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OwnerDetail_FirstName_Surname_HongKongId",
+                table: "OwnerDetail",
+                columns: new[] { "FirstName", "Surname", "HongKongId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OwnerDetail_HongKongId",
+                table: "OwnerDetail",
+                column: "HongKongId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Property_ApplicationUserId",
                 table: "Property",
                 column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Property_OwnerDetailId",
+                table: "Property",
+                column: "OwnerDetailId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transaction_ApplicationUserId",
                 table: "Transaction",
                 column: "ApplicationUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transaction_OwnerDetailId",
+                table: "Transaction",
+                column: "OwnerDetailId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transaction_PropertyId",
@@ -293,6 +347,9 @@ namespace PropertyDemo.Migrations.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "OwnerDetail");
         }
     }
 }
